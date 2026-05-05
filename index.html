@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Let Me Rovo That For You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09090b;
+      --surface: #111113;
+      --surface2: #18181b;
+      --border: #27272a;
+      --border2: #1c1c1f;
+      --text: #e4e4e7;
+      --text-muted: #71717a;
+      --text-dim: #52525b;
+      --text-faint: #3f3f46;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --green: #16a34a;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #app {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ---- GENERATOR ---- */
+    #generator {
+      width: 100%;
+      max-width: 620px;
+    }
+
+    .logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(42px, 8vw, 72px);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      color: #fafafa;
+      margin-bottom: 8px;
+    }
+    h1 span { color: var(--accent); }
+
+    .tagline {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-bottom: 48px;
+      letter-spacing: 0.02em;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    #query-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    #query-input::placeholder { color: var(--text-faint); }
+    #query-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .btn {
+      padding: 14px 24px;
+      border-radius: 8px;
+      border: none;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-primary:disabled {
+      background: #1e3a5f; color: #3b5998; cursor: not-allowed;
+    }
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); color: var(--text); }
+
+    #url-box {
+      background: #0f0f11;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-top: 24px;
+      display: none;
+      animation: fadeSlideUp 0.3s ease forwards;
+    }
+    #url-box.visible { display: block; }
+
+    .url-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    #url-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      word-break: break-all;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .url-actions { display: flex; gap: 8px; }
+
+    #copy-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: var(--accent);
+      color: #fff;
+    }
+    #copy-btn.done { background: var(--green); }
+
+    #preview-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    #preview-btn:hover { color: var(--text); border-color: var(--text-faint); }
+
+    .hint {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-faint);
+      margin-top: 32px;
+      line-height: 1.8;
+    }
+    .hint code {
+      color: var(--text-dim);
+      background: var(--surface2);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    /* ---- ANIMATION SCREEN ---- */
+    #anim-screen {
+      width: 100%;
+      max-width: 620px;
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    #anim-screen.visible { display: block; }
+
+    .anim-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-faint);
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .mock-browser {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+    }
+    .browser-chrome {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .browser-dots { display: flex; gap: 5px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+    .browser-address {
+      flex: 1;
+      background: var(--bg);
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-faint);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .browser-body { padding: 32px 28px 40px; }
+
+    .rovo-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .rovo-logo-mark {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 800; color: #fff;
+      letter-spacing: -0.05em;
+    }
+    .rovo-wordmark {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px; font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .mock-search-bar {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .mock-search-bar.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+    .search-icon { color: var(--text-faint); font-size: 16px; flex-shrink: 0; }
+
+    #typed-query {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--text);
+      flex: 1;
+      display: flex;
+      align-items: center;
+      min-height: 20px;
+    }
+    #cursor {
+      display: inline-block;
+      width: 2px; height: 16px;
+      background: var(--accent);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 0.7s step-end infinite;
+    }
+
+    .result-previews {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.5s ease 0.2s;
+    }
+    .result-previews.visible { opacity: 1; }
+    .result-skeleton {
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 12px 14px;
+      border: 1px solid var(--border2);
+    }
+    .skel-line {
+      height: 10px;
+      border-radius: 3px;
+      background: var(--border);
+      margin-bottom: 6px;
+      animation: shimmer 1.5s infinite;
+    }
+    .skel-line:last-child { margin-bottom: 0; background: var(--border2); }
+
+    #redirect-notice {
+      text-align: center;
+      margin-top: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-dim);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    #redirect-notice.visible { opacity: 1; }
+    #redirect-notice strong { color: var(--accent); }
+
+    #snarky-line {
+      text-align: center;
+      margin-top: 36px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-faint);
+      font-style: italic;
+      opacity: 0;
+      transition: opacity 0.6s 0.4s;
+    }
+    #snarky-line.visible { opacity: 1; }
+
+    #back-btn-wrap { text-align: center; margin-top: 20px; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; } 50% { opacity: 0; }
+    }
+    @keyframes shimmer {
+      0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- GENERATOR -->
+  <div id="generator">
+    <div class="logo">lmrtfy</div>
+    <h1>Let Me <span>Rovo</span><br>That For You</h1>
+    <p class="tagline">// passive-aggressive knowledge management</p>
+
+    <div class="input-row">
+      <input id="query-input" type="text" placeholder="what did they ask you this time..." autocomplete="off" />
+      <button class="btn btn-primary" id="generate-btn">Generate</button>
+    </div>
+
+    <div id="url-box">
+      <div class="url-label">Shareable Link</div>
+      <div id="url-text"></div>
+      <div class="url-actions">
+        <button id="copy-btn">Copy Link</button>
+        <button id="preview-btn">Preview →</button>
+      </div>
+    </div>
+
+    <p class="hint">
+      Paste the link in a ticket, Teams message, or email.<br>
+      Recipient clicks it → watches Rovo search → gets redirected.<br>
+      <code>?q=</code> param carries the query. Deploy anywhere.
+    </p>
+  </div>
+
+  <!-- ANIMATION SCREEN -->
+  <div id="anim-screen">
+    <div class="anim-eyebrow" id="anim-eyebrow">watch closely</div>
+
+    <div class="mock-browser">
+      <div class="browser-chrome">
+        <div class="browser-dots">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        <div class="browser-address">rtpwiki.atlassian.net/wiki/search</div>
+      </div>
+      <div class="browser-body">
+        <div class="rovo-header">
+          <div class="rovo-logo-mark">R</div>
+          <div class="rovo-wordmark">Rovo Search</div>
+        </div>
+        <div class="mock-search-bar" id="mock-search-bar">
+          <span class="search-icon">⌕</span>
+          <span id="typed-query"><span id="cursor"></span></span>
+        </div>
+        <div class="result-previews" id="result-previews">
+          <div class="result-skeleton">
+            <div class="skel-line" style="width:75%"></div>
+            <div class="skel-line" style="width:45%"></div>
+          </div>
+          <div class="result-skeleton">
+            <div class="skel-line" style="width:60%"></div>
+            <div class="skel-line" style="width:38%"></div>
+          </div>
+          <div class="result-skeleton">
+            <div class="skel-line" style="width:68%"></div>
+            <div class="skel-line" style="width:42%"></div>
+          </div>
+        </div>
+        <div id="redirect-notice"></div>
+      </div>
+    </div>
+
+    <div id="snarky-line"></div>
+    <div id="back-btn-wrap"></div>
+  </div>
+
+</div>
+
+<script>
+  // Confluence search — requires both ?q= and &text= to pre-populate and execute
+  const ROVO_BASE = (q) => `https://rtpwiki.atlassian.net/wiki/search?q=${encodeURIComponent(q)}&text=${encodeURIComponent(q)}`;
+
+  // Update this once after deploying to GitHub Pages
+  const LMRTFY_BASE = "https://yourusername.github.io/lmrtfy";
+  const SNARKY = [
+    "It was in Confluence. It's always in Confluence.",
+    "Before escalating, try searching.",
+    "Rovo found it. In about four seconds.",
+    "This could have been a search.",
+    "The answer was one search away.",
+    "Next time, check Confluence first.",
+  ];
+
+  const params = new URLSearchParams(window.location.search);
+  const urlQuery = params.get("q");
+  const isPlayback = !!urlQuery;
+
+  const $gen = document.getElementById("generator");
+  const $anim = document.getElementById("anim-screen");
+  const $input = document.getElementById("query-input");
+  const $genBtn = document.getElementById("generate-btn");
+  const $urlBox = document.getElementById("url-box");
+  const $urlText = document.getElementById("url-text");
+  const $copyBtn = document.getElementById("copy-btn");
+  const $previewBtn = document.getElementById("preview-btn");
+  const $searchBar = document.getElementById("mock-search-bar");
+  const $typedQuery = document.getElementById("typed-query");
+  const $cursor = document.getElementById("cursor");
+  const $results = document.getElementById("result-previews");
+  const $redirectNotice = document.getElementById("redirect-notice");
+  const $snarky = document.getElementById("snarky-line");
+  const $eyebrow = document.getElementById("anim-eyebrow");
+  const $backWrap = document.getElementById("back-btn-wrap");
+
+  let generatedUrl = "";
+  let animInterval = null;
+
+  // ---- generator ----
+  $input.addEventListener("keydown", (e) => { if (e.key === "Enter") generate(); });
+  $genBtn.addEventListener("click", generate);
+
+  function generate() {
+    const q = $input.value.trim();
+    if (!q) return;
+    generatedUrl = `${LMRTFY_BASE}?q=${encodeURIComponent(q)}`;
+    $urlText.textContent = generatedUrl;
+    $urlBox.classList.add("visible");
+  }
+
+  $copyBtn.addEventListener("click", () => {
+    if (!generatedUrl) return;
+    navigator.clipboard.writeText(generatedUrl).catch(() => {
+      const ta = document.createElement("textarea");
+      ta.value = generatedUrl;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    });
+    $copyBtn.textContent = "✓ Copied";
+    $copyBtn.classList.add("done");
+    setTimeout(() => {
+      $copyBtn.textContent = "Copy Link";
+      $copyBtn.classList.remove("done");
+    }, 2200);
+  });
+
+  $previewBtn.addEventListener("click", () => {
+    const q = $input.value.trim();
+    if (!q) return;
+    // Clean the URL so auto-start doesn't re-fire if user navigates back
+    if (window.history.replaceState) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+    startAnim(q, false);
+  });
+
+  // ---- animation ----
+  function startAnim(query, willRedirect) {
+    clearInterval(animInterval);
+
+    // Reset anim state
+    $typedQuery.innerHTML = '<span id="cursor"></span>';
+    const cursor = document.getElementById("cursor");
+    $searchBar.classList.add("active");
+    $results.classList.remove("visible");
+    $redirectNotice.classList.remove("visible");
+    $redirectNotice.innerHTML = "";
+    $snarky.classList.remove("visible");
+    $snarky.textContent = "";
+    $eyebrow.textContent = "watch closely";
+    $backWrap.innerHTML = "";
+
+    $gen.style.display = "none";
+    $anim.classList.add("visible");
+
+    const snarkyText = SNARKY[Math.floor(Math.random() * SNARKY.length)];
+    const charDelay = Math.max(45, Math.min(130, 2200 / query.length));
+    let i = 0;
+
+    animInterval = setInterval(() => {
+      i++;
+      const textNode = document.createTextNode(query.slice(0, i));
+      $typedQuery.innerHTML = "";
+      $typedQuery.appendChild(textNode);
+      const c = document.createElement("span");
+      c.id = "cursor";
+      $typedQuery.appendChild(c);
+
+      if (i >= query.length) {
+        clearInterval(animInterval);
+
+        setTimeout(() => {
+          // hide cursor, show results
+          $typedQuery.innerHTML = query;
+          $searchBar.classList.remove("active");
+          $results.classList.add("visible");
+          $snarky.textContent = `"${snarkyText}"`;
+          $snarky.classList.add("visible");
+
+          if (willRedirect) {
+            setTimeout(() => {
+              $redirectNotice.innerHTML = "opening Rovo...";
+              $redirectNotice.classList.add("visible");
+              $eyebrow.textContent = "redirecting to rovo...";
+              setTimeout(() => {
+                window.location.href = ROVO_BASE(query);
+              }, 900);
+            }, 1400);
+          } else {
+            $redirectNotice.innerHTML = "Results found. <strong>Taking you there.</strong>";
+            $redirectNotice.classList.add("visible");
+            const backBtn = document.createElement("button");
+            backBtn.className = "btn btn-ghost";
+            backBtn.textContent = "← Back to Generator";
+            backBtn.style.marginTop = "24px";
+            backBtn.addEventListener("click", () => {
+              $anim.classList.remove("visible");
+              $gen.style.display = "";
+            });
+            $backWrap.appendChild(backBtn);
+          }
+        }, 300);
+      }
+    }, charDelay);
+  }
+
+  // ---- auto-start in playback mode (only once, never races with preview) ----
+  let autoStarted = false;
+  if (isPlayback && urlQuery && !autoStarted) {
+    autoStarted = true;
+    startAnim(urlQuery, true);
+  }
+</script>
+</body>
+</html>
